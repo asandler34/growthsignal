@@ -6,7 +6,8 @@
     "start": "node src/server.js",
     "dev": "NODE_ENV=development SCANNER_ALLOW_PRIVATE=loopback node --watch src/server.js",
     "migrate": "node src/db/migrate.js",
-    "test": "node --test --test-concurrency=1 test/*.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "e2e": "node test/e2e/journey.js"
   },
   "repository": {
     "type": "git",

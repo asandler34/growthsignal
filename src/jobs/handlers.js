@@ -59,7 +59,7 @@ visibility.onFinalFailure = async ({ runId }, err) => {
   await db.query(`UPDATE visibility_runs SET status = 'failed', error = $2, completed_at = now() WHERE id = $1`, [runId, String(err.message).slice(0, 300)]);
 };
 
-const INTERVAL = { weekly: '7 days', monthly: '30 days' };
+const INTERVAL = { weekly: '7 days', biweekly: '14 days', monthly: '30 days' };
 
 // Enqueues scheduled scans and visibility runs that are due for paying customers.
 async function scheduleDue() {

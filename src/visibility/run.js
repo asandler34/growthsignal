@@ -92,9 +92,10 @@ async function summarize(runId, site, competitors) {
   const rate = (arr, key) => ({ count: arr.filter(s => s[key]).length, of: arr.length, interval: wilson(arr.filter(s => s[key]).length, arr.length) });
   const byPlatform = {};
   for (const s of samples) {
-    const b = byPlatform[s.provider] ||= { provider: s.provider, model: s.model, ok: 0, unavailable: 0, error: 0, mentioned: 0, cited: 0 };
+    const b = byPlatform[s.provider] ||= { provider: s.provider, model: s.model, ok: 0, unavailable: 0, error: 0, discovery: 0, mentioned: 0, cited: 0 };
     b[s.status === 'ok' ? 'ok' : s.status]++;
-    if (s.status === 'ok') { if (s.mentioned) b.mentioned++; if (s.cited) b.cited++; if (s.model) b.model = s.model; }
+    // Mention and citation counts are over discovery questions only, matching the headline rate.
+    if (s.status === 'ok') { if (s.model) b.model = s.model; if (s.intent !== 'brand') { b.discovery++; if (s.mentioned) b.mentioned++; if (s.cited) b.cited++; } }
   }
   const byPrompt = {};
   for (const s of ok) {

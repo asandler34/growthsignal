@@ -1,0 +1,3 @@
+/* Self hosted fonts (SIL Open Font License, see /fonts). No third party font requests. */
+@font-face{font-family:'DM Sans';font-style:normal;font-display:swap;font-weight:100 1000;src:url(/fonts/dm-sans-latin-wght-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Manrope';font-style:normal;font-display:swap;font-weight:200 800;src:url(/fonts/manrope-latin-wght-normal.woff2) format('woff2-variations')}

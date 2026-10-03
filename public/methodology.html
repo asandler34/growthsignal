@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Methodology · GrowthSignal</title>
+<meta name="description" content="How GrowthSignal scores website readiness and samples AI answers: the rubric, the crawlers we check, sampling conditions, definitions and limits.">
+<link rel="canonical" href="https://growthsignal.ai/methodology">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/fonts.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body class="app-body">
+<header class="app-header"><a href="/"><img src="/assets/growthsignal-logo.svg" alt="GrowthSignal.ai home" width="200" height="34"></a><nav aria-label="Main"><a href="/#scan">Free scan</a><a href="/#pricing">Pricing</a><a href="/methodology" aria-current="page">Methodology</a><a href="/app">Sign in</a></nav></header>
+<main class="app-main" id="main">
+<h1>How GrowthSignal measures</h1>
+<p class="muted">Rubric version 2026-10-a. Last reviewed October 3, 2026.</p>
+<p>GrowthSignal answers two different questions and never mixes them into one number:</p>
+<ol>
+<li><strong>Website readiness.</strong> Can search and AI systems reach your site and understand who you are, where you work and what you do? This is under your control and we can verify it directly.</li>
+<li><strong>Observed AI visibility.</strong> When we ask AI platforms the questions your customers ask, are you mentioned or cited? This is outside your direct control, varies between runs, and is reported as a sample with its uncertainty.</li>
+</ol>
+
+<section class="card" id="readiness">
+<h2>1. Website readiness score (0 to 100)</h2>
+<p>We fetch your homepage, robots.txt, your XML sitemap, and a limited number of pages chosen for business relevance (contact, about, services, locations, FAQ, pricing, reviews). We read the HTML your server returns and do not run JavaScript. Our crawler identifies itself as <code>GrowthSignalBot</code> and respects robots.txt for every page except the homepage you asked us to scan.</p>
+<div class="table-scroll"><table class="data">
+<thead><tr><th>Category</th><th>Check</th><th>Points</th></tr></thead>
+<tbody>
+<tr><td rowspan="5">Access (35)</td><td>Homepage loads with HTTP 200 over HTTPS (3 points if it loads without HTTPS)</td><td>7</td></tr>
+<tr><td>Search and AI answer crawlers allowed in robots.txt: Googlebot, Bingbot, OAI-SearchBot, Claude-SearchBot, PerplexityBot (proportional)</td><td>12</td></tr>
+<tr><td>No noindex in meta robots or X-Robots-Tag on pages read (4 if only non homepage pages)</td><td>8</td></tr>
+<tr><td>Homepage HTML has at least 150 words of readable text without JavaScript (half at 50 or more)</td><td>5</td></tr>
+<tr><td>XML sitemap found</td><td>3</td></tr>
+<tr><td rowspan="5">Business information (25)</td><td>Business name in title, site name or structured data</td><td>4</td></tr>
+<tr><td>Phone number found; no more than two distinct numbers across pages</td><td>6</td></tr>
+<tr><td>Street address or service area stated in text or structured data</td><td>6</td></tr>
+<tr><td>Opening hours stated</td><td>4</td></tr>
+<tr><td>Contact page found (partial credit for contact details without a page)</td><td>5</td></tr>
+<tr><td rowspan="4">Structured data (20)</td><td>JSON-LD present and parses</td><td>5</td></tr>
+<tr><td>LocalBusiness, Organization or a more specific business type</td><td>7</td></tr>
+<tr><td>Business markup includes name, url, telephone, address or areaServed, and hours (proportional)</td><td>6</td></tr>
+<tr><td>sameAs links to official profiles</td><td>2</td></tr>
+<tr><td rowspan="5">Content clarity (20)</td><td>Descriptive homepage title (15+ characters) and meta description (50+)</td><td>4</td></tr>
+<tr><td>Exactly one H1 on the homepage</td><td>3</td></tr>
+<tr><td>Services page with 300+ words (partial for shorter pages or service headings)</td><td>5</td></tr>
+<tr><td>FAQ or question and answer content</td><td>4</td></tr>
+<tr><td>About page, and reviews content or links to review profiles</td><td>4</td></tr>
+</tbody></table></div>
+<p>Checks we could not perform are marked "not checked" and removed from the total rather than scored as zero. Bands: 85 and above strong foundation, 65 to 84 good foundation with clear gaps, 40 to 64 significant gaps, below 40 major barriers.</p>
+<h3>Crawlers: search versus training</h3>
+<p>Some AI crawlers collect content for model training; others fetch pages to find and cite sources in answers. Blocking training crawlers (for example GPTBot, ClaudeBot, CCBot, Applebot-Extended, Google-Extended) is a legitimate business choice and does not lower your score. We list them so you can see what you block. Blocking search crawlers can reduce the chance your pages are used as a source, so those count.</p>
+<h3>What is not scored</h3>
+<ul><li><strong>llms.txt.</strong> We report whether it exists. It is a proposed convention and we have not seen a major AI provider confirm it changes answers, so it is not scored.</li>
+<li><strong>Listings on other sites</strong> such as Google Business Profile, Yelp or directories. They often matter a great deal for local answers, but we do not verify them. We show links we found and, in AI answer samples, which outside sources were cited.</li></ul>
+</section>
+
+<section class="card" id="visibility">
+<h2>2. Observed AI visibility (answer samples)</h2>
+<h3>How a sample is taken</h3>
+<ul>
+<li><strong>Access method.</strong> Official developer APIs only, with web search or grounding enabled: OpenAI Responses API with the web search tool, Anthropic Messages API with the web search tool, Google Gemini API with Google Search grounding, and Perplexity's Sonar API. We do not automate or scrape the ChatGPT, Claude, Gemini or Perplexity consumer apps.</li>
+<li><strong>Questions.</strong> Written the way a customer asks, from your business type, services and town, for example "Who are the best plumbers in Denver, CO?". You can edit them. One question asks about your business by name to check the facts AI repeats.</li>
+<li><strong>Context.</strong> Each question names the town explicitly. Where the API supports an approximate user location, we pass your city, state and country. Language: English. No conversation history or personalization.</li>
+<li><strong>Recorded with every answer.</strong> Platform, model identifier returned by the API, question, repeat number, location passed, time, answer text (trimmed to 4,000 characters) and the source URLs returned.</li>
+<li><strong>Repeats.</strong> Paid plans ask each question more than once per platform, because answers vary. We report how often repeats disagreed.</li>
+</ul>
+<h3>Definitions</h3>
+<ul>
+<li><strong>Mentioned:</strong> the answer text contains your business name (ignoring case, punctuation and suffixes such as LLC) or your domain.</li>
+<li><strong>Cited:</strong> a source URL returned for that answer is on your website's domain. A Yelp or directory page about you counts as a source, not as a citation of your website.</li>
+<li><strong>Unavailable:</strong> the platform is not connected, or our daily safety budget was reached. <strong>Failed:</strong> the platform returned an error after a retry. Neither is counted as "not mentioned"; both are excluded from rates and shown in your report.</li>
+<li><strong>Possible inaccurate fact:</strong> when asked about you by name, an answer included a phone number different from the one you confirmed.</li>
+</ul>
+<h3>Uncertainty</h3>
+<p>Rates come with a 95% Wilson interval. With 12 answers, "2 of 12" has a plausible range of about 5% to 45%. We label samples under 10 answers as small and avoid conclusions from single runs. Treat changes between runs as meaningful only when they persist.</p>
+<h3>API answers versus the apps people use</h3>
+<p>Consumer apps can use different models, system instructions, search settings, location and personalization, and can change without notice. Our samples show what the platforms' official APIs return under the stated conditions. They are evidence about how these systems treat your business, not a record of what any individual saw.</p>
+</section>
+
+<section class="card" id="changes">
+<h2>3. Improvement and monitoring</h2>
+<ul>
+<li>Fixes are ranked by points available and severity. Each says what we found, why it matters and what to do.</li>
+<li>Generated structured data, facts blocks and FAQ drafts come only from facts you confirm. We never edit your website.</li>
+<li>Rescans show score changes and which checks improved or regressed. If our rubric changes between scans, we say so.</li>
+<li>We report completed fixes separately from changes in sampled visibility, because visibility can change for reasons unrelated to your site.</li>
+</ul>
+</section>
+
+<section class="card">
+<h2>Safety</h2>
+<p>Our crawler only fetches public web addresses on standard ports, re-checks every redirect, refuses private and internal network addresses, caps response sizes and time, and treats page content as untrusted data. Page content is never sent to an AI model as instructions.</p>
+</section>
+</main>
+</body>
+</html>

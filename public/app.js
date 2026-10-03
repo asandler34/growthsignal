@@ -1,7 +1,35 @@
-const panels={check:{title:'Know what is holding you back.',body:'A focused audit of the foundations that help search access and understand your business.',list:['Search access and page readability','Clear services, locations, and contact details','Prioritized findings with supporting evidence'],view:'<div class="mini-panel-head"><span>AUDIT FINDINGS</span><span>SAMPLE REPORT</span></div><div class="mini-panel-body"><div class="issue-row"><span class="issue-num">01</span><div><strong>Service area is missing</strong><p>Add the locations you actually serve to your service page.</p><span class="issue-badge">High priority</span></div></div><div class="issue-row"><span class="issue-num">02</span><div><strong>Services need more detail</strong><p>Explain what is included and who the service is for.</p><span class="issue-badge">Content clarity</span></div></div><div class="issue-row"><span class="issue-num">03</span><div><strong>Business facts are inconsistent</strong><p>Confirm the same hours across your contact and home pages.</p><span class="issue-badge">Accuracy</span></div></div></div>'},improve:{title:'Make your next change count.',body:'Turn a finding into a practical improvement. Confirm the facts, refine your page, and verify the result.',list:['Owner approved page improvements','Accurate structured business information','Installation guidance and follow-up checks'],view:'<div class="mini-panel-head"><span>PAGE IMPROVEMENT</span><span>OWNER REVIEW</span></div><div class="mini-panel-body"><span class="issue-badge">Service area · Proposed addition</span><h3 style="font-size:22px;margin:18px 0">Local expertise. Clear coverage.</h3><p style="font-size:14px">We provide property maintenance for homeowners in Portsmouth, Rye, and North Hampton. Services include seasonal checks and coordination of routine maintenance.</p><div class="issue-row"><span class="issue-num">✓</span><div><strong>Confirm services and locations</strong><p>Only publish details that reflect your business.</p></div></div><div class="issue-row"><span class="issue-num">✓</span><div><strong>Ready for your website</strong><p>Approved copy and matching installation guidance.</p></div></div></div>'},grow:{title:'Find the gaps worth closing.',body:'Compare sampled appearances, inspect cited sources, and build a focused plan for your next website improvements.',list:['Defined discovery questions for your business','Competitor comparisons and source analysis','A monthly plan grounded in observed gaps'],view:'<div class="mini-panel-head"><span>SAMPLED APPEARANCES</span><span>ILLUSTRATIVE DATA</span></div><div class="mini-panel-body"><div class="compare-row"><span class="compare-label">Your business</span><span class="bar"><i style="width:33%"></i></span><span>2 / 6</span></div><div class="compare-row"><span class="compare-label">Competitor A</span><span class="bar"><i style="width:66%"></i></span><span>4 / 6</span></div><div class="compare-row"><span class="compare-label">Competitor B</span><span class="bar"><i style="width:50%"></i></span><span>3 / 6</span></div><p class="compare-note">Mentions in six example answers. A snapshot, not a universal ranking.</p><div class="issue-row"><span class="issue-num">✦</span><div><strong>Your next content opportunity</strong><p>Explain your seasonal maintenance process and answer questions about scheduling.</p></div></div></div>'}};
-function setTab(key){const p=panels[key];document.querySelector('#product-panel').innerHTML='<div><h3>'+p.title+'</h3><p>'+p.body+'</p><ul class="panel-list">'+p.list.map(x=>'<li>'+x+'</li>').join('')+'</ul><button class="text-link open-demo">Explore a sample report</button></div><div class="mini-panel">'+p.view+'</div>';document.querySelectorAll('[data-tab]').forEach(b=>{const active=b.dataset.tab===key;b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1});document.querySelector('#product-panel .open-demo').addEventListener('click',openDemo)}
-document.querySelectorAll('[data-tab]').forEach(b=>{b.addEventListener('click',()=>setTab(b.dataset.tab));b.addEventListener('keydown',e=>{const keys=Object.keys(panels);let i=keys.indexOf(b.dataset.tab);if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();i=(i+(e.key==='ArrowRight'?1:2))%3;setTab(keys[i]);document.querySelector('[data-tab="'+keys[i]+'"]').focus()}})});
-const samples={studio:{name:'Creative studio',score:72,mentions:2,issues:[['Services are too broad','Explain the specific design and development work you offer, with examples.','/services'],['Project process is missing','Describe how projects begin, what clients provide, and what delivery includes.','/services'],['Contact information differs','Confirm consistent contact details on the homepage and contact page.','/contact']]},home:{name:'Home services',score:64,mentions:1,issues:[['Service area is unclear','List the towns you actually serve in a visible section of your service page.','/service-area'],['Scope needs clarification','Explain which maintenance tasks are included and which are coordinated separately.','/services'],['Hours are inconsistent','Confirm one accurate set of hours across your website.','/contact']]},shop:{name:'Online shop',score:81,mentions:3,issues:[['Delivery information is difficult to find','Make delivery timeframes and shipping restrictions easy to access.','/shipping'],['Product specifications are incomplete','Add factual materials, dimensions, and usage information.','/products'],['Returns questions are unanswered','Explain the return window and process clearly.','/returns']]}};
+// Homepage interactions: free scan form, sample reports, pricing toggle, product FAQ and inquiry form.
+(function () {
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  // ---------- Free scan ----------
+  const form = $('#scan-form');
+  const status = $('#scan-status');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!data.url.trim()) { status.innerHTML = ''; status.append(msg('Enter your website address, like yourbusiness.com.', 'err')); $('#scan-url').focus(); return; }
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    status.textContent = 'Starting your scan…';
+    try {
+      const res = await fetch('/api/scans', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || 'Could not start the scan.');
+      location.href = j.siteId ? `/app/site/${j.siteId}` : `/scan/${j.id}`;
+    } catch (err) {
+      status.innerHTML = '';
+      status.append(msg(err.message, 'err'));
+      btn.disabled = false;
+    }
+  });
+  function msg(text, cls) { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }
+
+  fetch('/api/me').then(r => r.json()).then(j => { if (j.user) { $('#nav-signin').textContent = 'Dashboard'; } }).catch(() => {});
+
+  // ---------- Sample reports (fictional) ----------
+  const samples={studio:{name:'Creative studio',score:72,mentions:2,issues:[['Services are too broad','Explain the specific design and development work you offer, with examples.','/services'],['Project process is missing','Describe how projects begin, what clients provide, and what delivery includes.','/services'],['Contact information differs','Confirm consistent contact details on the homepage and contact page.','/contact']]},home:{name:'Home services',score:64,mentions:1,issues:[['Service area is unclear','List the towns you actually serve in a visible section of your service page.','/service-area'],['Scope needs clarification','Explain which maintenance tasks are included and which are coordinated separately.','/services'],['Hours are inconsistent','Confirm one accurate set of hours across your website.','/contact']]},shop:{name:'Online shop',score:81,mentions:3,issues:[['Delivery information is difficult to find','Make delivery timeframes and shipping restrictions easy to access.','/shipping'],['Product specifications are incomplete','Add factual materials, dimensions, and usage information.','/products'],['Returns questions are unanswered','Explain the return window and process clearly.','/returns']]}};
 
 Object.assign(samples, {
  restaurant:{name:'Restaurant & café',score:68,mentions:2,issues:[['Menu is an image only','Publish menu items and prices as readable text, alongside any menu photos.','/menu'],['Dietary information is missing','State factual dietary options and direct guests to your team for allergen questions.','/menu'],['Booking details are unclear','Explain reservations, opening hours, and how guests can contact you.','/visit']]},
@@ -16,36 +44,115 @@ Object.assign(samples, {
  photography:{name:'Photography',score:76,mentions:2,issues:[['Portfolio lacks descriptive text','Add accurate project descriptions alongside your photographs.','/portfolio'],['Booking scope is unclear','Describe session types, coverage areas, and what packages include.','/sessions'],['Delivery questions are unanswered','Explain the process for timelines, image delivery, and usage rights.','/faq']]}
 });
 
-function renderDemo(){const s=samples[document.querySelector('#business-demo').value];document.querySelector('#demo-content').innerHTML='<div class="demo-score"><span>'+s.name+'<small>Illustrative website readiness score</small></span><strong>'+s.score+'<small>/ 100</small></strong></div><p class="compare-note">Mentioned in '+s.mentions+' of 6 illustrative answer samples. These results are fictional.</p>'+s.issues.map((x,i)=>'<article class="demo-issue"><h3><span class="lime">0'+(i+1)+'</span> '+x[0]+'</h3><p>'+x[1]+'</p><code>Example page: '+x[2]+'</code></article>').join('')}
-const demo=document.querySelector('#demo-dialog'),plan=document.querySelector('#plan-dialog');function openDemo(){if(plan.open)plan.close();renderDemo();demo.showModal()}document.querySelectorAll('.open-demo').forEach(b=>b.addEventListener('click',openDemo));document.querySelector('#business-demo').addEventListener('change',renderDemo);document.querySelectorAll('.close-dialog').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{const r=d.getBoundingClientRect();if(e.target===d&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))d.close()}));
-document.querySelector('#compare-plans').addEventListener('click',()=>{demo.close();document.querySelector('#pricing').scrollIntoView({behavior:'smooth'})});document.querySelector('#plan-demo').addEventListener('click',openDemo);
-let billing='monthly';const descriptions={Check:'Website readiness audits, access checks, business information review, and limited AI answer samples.',Improve:'Everything in Check, plus guided page improvements, a business fact builder, structured data, and verification.',Grow:'Everything in Improve, plus competitor comparisons, expanded answer sampling, content gaps, and a monthly action plan.'};document.querySelectorAll('[data-billing]').forEach(b=>b.addEventListener('click',()=>{billing=b.dataset.billing;document.querySelectorAll('[data-billing]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b)});document.querySelectorAll('.price-card').forEach(card=>{const price=card.querySelector('.price strong');const value=billing==='monthly'?price.dataset.month:price.dataset.year;price.textContent='$'+value;card.querySelector('.bill-note').textContent=billing==='monthly'?'Billed monthly':'$'+(Number(value)*12).toFixed(2)+' billed yearly'})}));document.querySelectorAll('.plan-button').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.plan;const card=b.closest('.price-card');document.querySelector('#plan-title').textContent=key+' · '+card.querySelector('.price strong').textContent+'/month';document.querySelector('#plan-detail').textContent=descriptions[key]+' '+card.querySelector('.bill-note').textContent+'.';plan.showModal()}));
-document.querySelector('#download-sample').addEventListener('click',()=>{const s=samples[document.querySelector('#business-demo').value];const report='GrowthSignal — SAMPLE REPORT\nIllustrative data only. This is not a live audit.\n\nBusiness type: '+s.name+'\nWebsite readiness: '+s.score+'/100\nSample mentions: '+s.mentions+' of 6 illustrative answers\n\n'+s.issues.map((x,i)=>(i+1)+'. '+x[0]+'\n'+x[1]+'\nExample page: '+x[2]).join('\n\n')+'\n\nNo guaranteed AI search placement.\n';const url=URL.createObjectURL(new Blob([report],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='GrowthSignal_Sample_Report.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
-const menu=document.querySelector('.menu-toggle');menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',open);menu.setAttribute('aria-label',open?'Close navigation':'Open navigation');document.querySelector('nav').classList.toggle('open',open)});document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelector('nav').classList.remove('open');menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Open navigation')}));
-setTab('check');if('IntersectionObserver' in window&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}}),{threshold:.08});document.querySelectorAll('.benefits article,.bento article,.process-grid article,.price-card,.split-title,.closing').forEach(el=>{el.classList.add('reveal');obs.observe(el)})}
+  function renderDemo() {
+    const s = samples[$('#business-demo').value];
+    const box = $('#demo-content');
+    box.replaceChildren();
+    const head = document.createElement('div'); head.className = 'demo-score';
+    const left = document.createElement('span'); left.textContent = s.name;
+    const small = document.createElement('small'); small.textContent = 'Illustrative readiness score'; left.append(small);
+    const right = document.createElement('strong'); right.textContent = String(s.score);
+    const of = document.createElement('small'); of.textContent = '/ 100'; right.append(of);
+    head.append(left, right);
+    const note = document.createElement('p'); note.className = 'compare-note'; note.textContent = `Mentioned in ${s.mentions} of 6 illustrative answer samples. These results are fictional.`;
+    box.append(head, note);
+    s.issues.forEach((x, i) => {
+      const a = document.createElement('article'); a.className = 'demo-issue';
+      const h = document.createElement('h3'); const n = document.createElement('span'); n.className = 'lime'; n.textContent = `0${i + 1} `; h.append(n, x[0]);
+      const p = document.createElement('p'); p.textContent = x[1];
+      const c = document.createElement('code'); c.textContent = `Example page: ${x[2]}`;
+      a.append(h, p, c); box.append(a);
+    });
+  }
+  const demo = $('#demo-dialog');
+  $$('.open-demo').forEach(b => b.addEventListener('click', () => { renderDemo(); demo.showModal(); }));
+  $('#business-demo').addEventListener('change', renderDemo);
+  $('#demo-scan').addEventListener('click', () => demo.close());
+  $$('.close-dialog').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+  $$('dialog').forEach(d => d.addEventListener('click', e => { const r = d.getBoundingClientRect(); if (e.target === d && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) d.close(); }));
+  $('#download-sample').addEventListener('click', () => {
+    const s = samples[$('#business-demo').value];
+    const report = `GrowthSignal SAMPLE REPORT\nFictional business. Illustrative data only. This is not a scan of any real website.\n\nBusiness type: ${s.name}\nIllustrative readiness: ${s.score}/100\nIllustrative mentions: ${s.mentions} of 6 answers\n\n${s.issues.map((x, i) => `${i + 1}. ${x[0]}\n${x[1]}\nExample page: ${x[2]}`).join('\n\n')}\n\nNo tool can guarantee placement in AI answers.\n`;
+    const url = URL.createObjectURL(new Blob([report], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'GrowthSignal_Sample_Report.txt'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
 
-const chatDialog=document.querySelector('#chat-dialog');
-const chatLog=document.querySelector('#chat-log');
-function addChat(text,who){const el=document.createElement('div');el.className='chat-message '+who;el.textContent=text;chatLog.append(el);chatLog.scrollTop=chatLog.scrollHeight;}
-function answerQuestion(q){
- const x=q.toLowerCase();
- if(/guarantee|rank|recommend.*me|first place|number one/.test(x))return 'No tool can guarantee an AI recommendation. GrowthSignal focuses on search access, accurate information, useful content, and transparent samples of AI answers. Those samples are snapshots, not a universal ranking.';
- if(/live|today|subscribe|launch|available|buy|checkout|start|trial/.test(x))return 'GrowthSignal is currently a launch preview. You can explore 13 illustrative business reports and send an inquiry today. Live audits, accounts, checkout, and a free trial are not open yet.';
- if(/which plan|choose|best plan|find my plan/.test(x))return 'Check is for understanding your website’s foundations. Improve adds tools to make and verify changes. Grow adds competitor comparisons and a monthly action plan. Try asking “I want an audit”, “I want to fix my website”, or “I want competitor tracking”.';
- if(/competitor|track|monitor|grow plan/.test(x))return 'Grow is the planned $59/month tier. It includes everything in Improve, up to 3 competitor comparisons, 30 AI answer samples each month, content gap analysis, and a monthly action plan. Checkout is not open yet.';
- if(/fix|improve|content|schema|structured|install/.test(x))return 'Improve is the planned $24.99/month tier. It adds owner confirmed business facts, guided page improvements, appropriate structured data, installation guidance, and verification. Applying changes requires website access or help from your webmaster.';
- if(/price|cost|pricing|bill|annual|year|refund|cancel/.test(x))return 'Planned monthly pricing: Check $7.99, Improve $24.99, Grow $59. The pricing section also shows yearly billing at a 15% discount. No payment is collected on this preview site. Subscription and refund terms will be published before checkout opens.';
- if(/audit|check plan|scan|report/.test(x))return 'Check is the planned $7.99/month tier: one website and business location, monthly readiness audit, access checks, business information review, 6 AI answer samples per month, and prioritized fixes. The reports available now are clearly labeled illustrative samples.';
- if(/chatgpt|claude|gemini|perplexity|platform|coverage/.test(x))return 'GrowthSignal is designed around AI search discovery. Sampled answers will use supported search enabled surfaces, with exact platform coverage disclosed when live audits launch. API samples can differ from consumer app answers.';
- if(/connect|setup|onboard|website access|wordpress|wix|shopify|squarespace/.test(x))return 'A public website URL is the planned starting point for a scan. Publishing changes requires owner approval and website access or a webmaster. Exact installation support by platform has not been finalized.';
- if(/business|categor|industry|restaurant|legal|health|real estate|fitness/.test(x))return 'The preview includes 13 business categories, from home services and restaurants to software, legal services, healthcare, and events. Each sample has different findings. They demonstrate the intended experience and are not real audit results.';
- if(/seo|optimization|how.*work/.test(x))return 'AI search optimization overlaps with SEO: readable pages, clear services, accurate facts, and useful content. GrowthSignal organizes this into Check, Improve, and Grow so you can understand an issue, make a correction, and monitor the evidence.';
- if(/privacy|data|store|security/.test(x))return 'This FAQ assistant does not send or save your questions. If you submit an inquiry, Jotform collects the details so the team can respond. Avoid including sensitive information.';
- if(/contact|person|human|question|help|support/.test(x))return 'Use “Need a person? Send an inquiry” below. The short form reaches the GrowthSignal team without requiring a demo booking. Include your email so they can reply.';
- return 'I can answer product FAQ questions about plans, audits, setup, pricing, and the launch preview. I do not have a confirmed answer to that question. Use the inquiry link below for a response from the team.';
-}
-function askChat(q){addChat(q,'visitor');addChat(answerQuestion(q),'assistant');}
-document.querySelector('#chat-launcher').addEventListener('click',()=>{if(!chatLog.children.length)addChat('Hi. What would you like to know about GrowthSignal? I can explain the planned tiers and what you can try today.','assistant');chatDialog.showModal();document.querySelector('#chat-input').focus();});
-document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>askChat(b.dataset.question)));
-document.querySelector('#chat-form').addEventListener('submit',e=>{e.preventDefault();const input=document.querySelector('#chat-input');const q=input.value.trim();if(!q)return;askChat(q);input.value='';input.focus();});
-document.querySelectorAll('.contact-jump').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());document.querySelector('#contact').scrollIntoView({behavior:'smooth'});const link=document.querySelector('#contact .text-link');link.focus({preventScroll:true});}));
+  // ---------- Pricing ----------
+  let billing = 'monthly';
+  let plans = null;
+  $$('[data-billing]').forEach(b => b.addEventListener('click', () => {
+    billing = b.dataset.billing;
+    $$('[data-billing]').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    $$('.price-card').forEach(card => {
+      const price = card.querySelector('.price strong');
+      if (!price.dataset.month) return;
+      const value = billing === 'monthly' ? price.dataset.month : price.dataset.year;
+      price.textContent = `$${value}`;
+      card.querySelector('.price span').textContent = billing === 'monthly' ? '/month' : '/year';
+      card.querySelector('.bill-note').textContent = billing === 'monthly' ? 'Billed monthly' : `Billed yearly, about $${(Number(value) / 12).toFixed(2)} a month`;
+    });
+  }));
+  // Keep displayed prices in sync with the server's plan definitions.
+  fetch('/api/config').then(r => r.json()).then(cfg => {
+    plans = Object.fromEntries(cfg.plans.map(p => [p.id, p]));
+    $$('.price-card [data-plan]').forEach(btn => {
+      const p = plans[btn.dataset.plan];
+      const strong = btn.closest('.price-card').querySelector('.price strong');
+      if (p && strong) { strong.dataset.month = String(p.priceMonthly / 100); strong.dataset.year = String(p.priceAnnual / 100); if (billing === 'monthly') strong.textContent = `$${p.priceMonthly / 100}`; }
+    });
+    if (!cfg.billing.enabled) $('#pricing-footnote').textContent += ' Paid plans open soon; the free scan works today.';
+  }).catch(() => {});
+
+  // ---------- Navigation ----------
+  const menu = $('.menu-toggle');
+  menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); menu.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation'); $('nav').classList.toggle('open', open); });
+  $$('nav a').forEach(a => a.addEventListener('click', () => { $('nav').classList.remove('open'); menu.setAttribute('aria-expanded', 'false'); menu.setAttribute('aria-label', 'Open navigation'); }));
+  if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const obs = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }), { threshold: 0.08 });
+    $$('.benefits article,.process-grid article,.price-card,.split-title,.closing,.example-card').forEach(el => { el.classList.add('reveal'); obs.observe(el); });
+  }
+
+  // ---------- Product FAQ (prewritten answers, not a live AI) ----------
+  const chatDialog = $('#chat-dialog');
+  const chatLog = $('#chat-log');
+  const price = id => (plans && plans[id] ? `$${plans[id].priceMonthly / 100}` : { check: '$9', improve: '$29', grow: '$59' }[id]);
+  function addChat(text, who) { const el = document.createElement('div'); el.className = `chat-message ${who}`; el.textContent = text; chatLog.append(el); chatLog.scrollTop = chatLog.scrollHeight; }
+  function answer(q) {
+    const x = q.toLowerCase();
+    if (/guarantee|rank|first place|number one|promise/.test(x)) return 'No. No tool can guarantee that ChatGPT or any AI assistant will recommend you. We check what is in your control on your website, sample real AI answers, and show what changed over time.';
+    if (/sample|answers?|api|how.*(measure|track)|platform|chatgpt|claude|gemini|perplexity/.test(x)) return 'We send customer style questions, like "best plumber in Denver", to AI platforms through their official APIs with web search on, repeat them, and record whether you are mentioned, whether your site is cited, and every source. API answers can differ from the consumer apps, so we treat results as a sample, not a ranking. The methodology page has the details.';
+    if (/which plan|choose|best plan|find my plan|recommend.*plan/.test(x)) return `Start with the free scan. If you want it watched, Check (${price('check')}/month) runs weekly scans and monthly AI answer samples. If you want ready to paste fixes and competitor comparisons, Improve (${price('improve')}/month). If you manage several sites, Grow (${price('grow')}/month).`;
+    if (/price|cost|pricing|how much|annual|year|month/.test(x)) return `Free scan: $0. Check: ${price('check')}/month. Improve: ${price('improve')}/month. Grow: ${price('grow')}/month. Yearly billing gives two months free. All limits are listed in the pricing section.`;
+    if (/cancel|refund/.test(x)) return 'You can cancel any time from Plan and billing in your dashboard. Paid features continue until the end of the period you paid for. See the Terms for refund details.';
+    if (/free|trial|card/.test(x)) return 'The free scan needs no card and no account. A free account adds the evidence behind every finding, all recommendations, and one AI answer sample of 3 questions on 1 platform.';
+    if (/fix|schema|structured|json|install|change my (site|website)|edit/.test(x)) return 'We never edit your website. Improve and Grow generate structured data, a business facts block, an FAQ draft and robots.txt lines from facts you confirm. You or your web person paste them in, then we rescan to verify.';
+    if (/competitor/.test(x)) return 'Improve compares you with up to 2 competitors and Grow with up to 5 per site: how often each is mentioned in the same sampled answers.';
+    if (/wordpress|wix|squarespace|shopify|godaddy|webflow|platform.*site|builder/.test(x)) return 'The scan works with any public website. The fix kit gives copy and paste code that works with most builders that allow custom header code. Ask us through the message form if you are unsure about yours.';
+    if (/privacy|data|store|security|delete/.test(x)) return 'We read public pages on your site. Free reports without an account are deleted after 30 days. You can delete your account and all reports from your dashboard. This FAQ box does not send or store anything you type.';
+    if (/seo/.test(x)) return 'There is a lot of overlap with SEO. GrowthSignal adds the AI specific parts: AI crawler access, whether AI answers mention you, and which sources they cite.';
+    if (/agency|designer|client|freelanc/.test(x)) return 'Grow covers up to 3 websites, and verified site owners can share a read only report link. Send us a message if you manage more sites.';
+    if (/contact|person|human|help|support|talk/.test(x)) return 'Use "Need a person?" below to send a message. A person replies by email. No sales call needed.';
+    return 'I only have prewritten answers about plans, scans, AI answer samples, fixes and privacy, and I do not have one for that. Use "Need a person?" below and we will reply by email.';
+  }
+  function ask(q) { addChat(q, 'visitor'); addChat(answer(q), 'assistant'); }
+  $('#chat-launcher').addEventListener('click', () => { if (!chatLog.children.length) addChat('Hi. I answer common questions from our written FAQ. I am not a live AI. What would you like to know?', 'assistant'); chatDialog.showModal(); $('#chat-input').focus(); });
+  $$('[data-question]').forEach(b => b.addEventListener('click', () => ask(b.dataset.question)));
+  $('#chat-form').addEventListener('submit', e => { e.preventDefault(); const input = $('#chat-input'); const q = input.value.trim(); if (!q) return; ask(q); input.value = ''; input.focus(); });
+  $$('.contact-jump').forEach(b => b.addEventListener('click', () => { $$('dialog[open]').forEach(d => d.close()); $('#contact').scrollIntoView({ behavior: 'smooth' }); $('#iq-email').focus({ preventScroll: true }); }));
+
+  // ---------- Inquiry form ----------
+  const iq = $('#inquiry-form');
+  const iqStatus = $('#inquiry-status');
+  iq.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(iq).entries());
+    iqStatus.replaceChildren(msg('Sending…', ''));
+    try {
+      const res = await fetch('/api/inquiries', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || 'Could not send your message.');
+      iq.replaceChildren(msg('Thanks. Your message was sent and a person will reply by email.', 'notice-ok'));
+    } catch (err) { iqStatus.replaceChildren(msg(err.message, 'notice-err')); }
+  });
+})();

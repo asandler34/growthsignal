@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · GrowthSignal</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/fonts.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body class="auth-body">
+<main class="auth-card">
+  <a class="brand" href="/"><img src="/assets/growthsignal-logo.svg" alt="GrowthSignal.ai home" width="200" height="34"></a>
+  <h1>Sign in or create your free account</h1>
+  <p class="muted">We email you a one time sign in link. No password needed.</p>
+  <div id="login-error" class="notice error" hidden>That sign in link has expired or was already used. Request a new one below.</div>
+  <form id="login-form">
+    <div class="field"><label for="email">Email address</label><input id="email" type="email" required autocomplete="email"></div>
+    <button class="button" type="submit">Email me a sign in link</button>
+    <div id="login-status" aria-live="polite"></div>
+  </form>
+  <p class="muted" style="font-size:13px;margin-top:20px">By continuing you agree to the <a href="/terms" class="lime">Terms</a> and <a href="/privacy" class="lime">Privacy Policy</a>.</p>
+</main>
+<script src="/js/common.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>

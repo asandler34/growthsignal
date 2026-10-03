@@ -30,7 +30,7 @@ function createApp() {
 
   app.use((req, res, next) => {
     res.set({
-      'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+      'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'X-Frame-Options': 'DENY',
@@ -137,7 +137,7 @@ function createApp() {
   // GET shows a confirmation button so link scanners in email clients cannot consume the one time token.
   app.get('/auth/verify', (req, res) => {
     const token = String(req.query.token || '').slice(0, 100).replace(/[^A-Za-z0-9_-]/g, '');
-    res.type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · GrowthSignal</title><link rel="stylesheet" href="/app.css"></head><body class="auth-body"><main class="auth-card"><a href="/" class="brand"><img src="/assets/growthsignal-logo.svg" alt="GrowthSignal.ai" width="200" height="34"></a><h1>Finish signing in</h1><form method="post" action="/auth/verify"><input type="hidden" name="token" value="${token}"><button class="button" type="submit">Continue to GrowthSignal</button></form></main></body></html>`);
+    res.type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · GrowthSignal</title><link rel="stylesheet" href="/fonts.css"><link rel="stylesheet" href="/app.css"></head><body class="auth-body"><main class="auth-card"><a href="/" class="brand"><img src="/assets/growthsignal-logo.svg" alt="GrowthSignal.ai" width="200" height="34"></a><h1>Finish signing in</h1><form method="post" action="/auth/verify"><input type="hidden" name="token" value="${token}"><button class="button" type="submit">Continue to GrowthSignal</button></form></main></body></html>`);
   });
   app.post('/auth/verify', wrap(async (req, res) => {
     const result = await auth.consumeLoginToken(String(req.body.token || ''));
