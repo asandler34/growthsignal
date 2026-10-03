@@ -159,7 +159,7 @@ test('paid plan sampling: repeats, competitor detection, unavailable platforms, 
   const v = (await c.get(`/api/sites/${id}/visibility/${run.json.id}`)).json;
   assert.deepEqual(v.config.platforms, ['openai', 'perplexity', 'gemini']);
   assert.deepEqual(v.config.notConnected, ['anthropic']);
-  assert.equal(v.config.repeats, 3);
+  assert.equal(v.config.repeats, 2);
   const gem = v.summary.byPlatform.find(p => p.provider === 'gemini');
   assert.equal(gem.ok, 0);
   assert.ok(gem.error > 0);
