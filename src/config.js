@@ -78,6 +78,8 @@ const config = {
   limits: {
     anonScansPerIpPerHour: int(env.ANON_SCANS_PER_IP_PER_HOUR, 5),
     anonScansPerDay: int(env.ANON_SCANS_PER_DAY, 500),
+    // Free AI answers on anonymous previews, across all visitors (about 1 to 2 cents each).
+    anonSnapshotsPerDay: int(env.ANON_SNAPSHOTS_PER_DAY, 300),
     loginEmailsPerHour: int(env.LOGIN_EMAILS_PER_HOUR, 5),
   },
 

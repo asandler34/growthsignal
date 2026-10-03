@@ -2,13 +2,13 @@
 
 Date: 2026-10-03. Branch `claude/growthsignal-launch-w4g88i`, PR #1.
 
-**Where things were tested.** Everything below marked "tested" ran in a sandbox: 30 automated integration, security and adapter tests (`npm test`, Postgres 16) and a 15 check Playwright browser journey (`npm run e2e`). The sandbox had no outbound internet. So real websites were not crawled (local fixture sites stand in for them), and AI providers, Stripe and email were not called. AI providers are exercised against a test stub that returns their documented response shapes. Stripe webhooks are exercised with real signature verification against locally signed events. Nothing has been deployed.
+**Where things were tested.** Everything below marked "tested" ran in a sandbox: 34 automated integration, security and adapter tests (`npm test`, Postgres 16) and a 17 check Playwright browser journey (`npm run e2e`). The sandbox had no outbound internet. So real websites were not crawled (local fixture sites stand in for them), and AI providers, Stripe and email were not called. AI providers are exercised against a test stub that returns their documented response shapes. Stripe webhooks are exercised with real signature verification against locally signed events. Nothing has been deployed.
 
 ## Implemented and tested
 
 | Area | What was verified |
 |---|---|
-| Free scan | Real crawl of fixture sites: robots.txt, sitemap, priority pages, 19 check rubric, evidence per check, preview limited to score, categories and top 3 fixes |
+| Free scan | Real crawl of fixture sites: robots.txt, sitemap, priority pages, 19 check rubric, evidence per check, preview limited to score, categories and top 3 fixes; one free AI answer (when name, type and town are given) and a ready to paste starter fix |
 | Scanner safety | Private, loopback, link local, metadata, CGNAT and mapped IPv6 blocked at connect time; redirect to metadata blocked; size, decompression bomb and slow server limits; hostile page content rendered as text |
 | Errors | Unreachable sites give a plain error; failed scan jobs retry with backoff, then report |
 | Accounts | Magic link sign in, single use tokens, mail scanner safe confirm step, CSRF origin check, rate limits on scans and sign in |

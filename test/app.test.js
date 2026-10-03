@@ -41,6 +41,30 @@ test('anonymous visitor runs a real preview scan and sees a bounded preview', as
   assert.equal(v.report.checks[0].evidence, undefined, 'evidence requires an account');
 });
 
+test('free preview includes one real AI answer and a ready to paste fix, without sign up', async () => {
+  const c = h.client(app.base);
+  const r = await c.post('/api/scans', { url: `${site.origin}/`, businessName: 'Summit Plumbing', city: 'Denver', region: 'CO', category: 'plumber' });
+  await h.drain();
+  const v = (await c.get(`/api/scans/${r.json.id}`)).json;
+  assert.equal(v.status, 'complete');
+  const snap = v.snapshot;
+  assert.equal(snap.status, 'complete');
+  assert.equal(snap.question, 'Who are the best plumbers in Denver, CO?');
+  assert.equal(snap.provider, 'openai');
+  assert.equal(snap.mentioned, true);
+  assert.deepEqual(snap.location, { city: 'Denver', region: 'CO', country: 'US' });
+  assert.ok(snap.answer.length > 0 && snap.answer.length <= 1500);
+  assert.ok(snap.sources.some(x => x.domain === 'yelp.com' || x.domain === 'www.yelp.com'));
+  if (v.freeFix) assert.ok(v.freeFix.content && v.freeFix.note && v.report.priorities.some(p => p.checkId === v.freeFix.checkId));
+  const spent = await db.one('SELECT cents FROM ai_spend WHERE day = current_date');
+  assert.ok(Number(spent.cents) > 0, 'snapshot spend is recorded against the daily budget');
+
+  const bare = await c.post('/api/scans', { url: `${site.origin}/` });
+  await h.drain();
+  const b = (await c.get(`/api/scans/${bare.json.id}`)).json;
+  assert.equal(b.snapshot.status, 'needs_context', 'no AI call without name, type and town');
+});
+
 test('invalid and internal URLs are rejected with a useful message', async () => {
   const c = h.client(app.base);
   for (const url of ['', 'ftp://x.com', 'http://169.254.169.254/', 'http://10.0.0.5/']) {

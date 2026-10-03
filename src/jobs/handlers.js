@@ -4,6 +4,7 @@ const { config } = require('../config');
 const log = require('../lib/log');
 const { buildReadinessReport, compareReports } = require('../scanner/report');
 const { runVisibility } = require('../visibility/run');
+const { initialSnapshot, runSnapshot } = require('../visibility/snapshot');
 const { sendEmail } = require('../lib/email');
 const { planFor } = require('../lib/entitlements');
 const { getPlan, ACTIVE_STATUSES } = require('../lib/plans');
@@ -36,7 +37,10 @@ const scan = async ({ scanId }) => {
     comparison = prev ? compareReports(prev.report, report) : null;
   }
   report.comparison = comparison;
-  await db.query(`UPDATE scans SET status = 'complete', report = $2, score = $3, completed_at = now(), progress = $4 WHERE id = $1`, [scanId, report, report.score.total, { step: 'complete', message: 'Report ready' }]);
+  // Anonymous previews also get one free AI answer, fetched after the report is shown.
+  const snapshot = s.kind === 'preview' ? initialSnapshot(s.context || {}) : null;
+  await db.query(`UPDATE scans SET status = 'complete', report = $2, score = $3, completed_at = now(), progress = $4, snapshot = $5 WHERE id = $1`, [scanId, report, report.score.total, { step: 'complete', message: 'Report ready' }, snapshot]);
+  if (snapshot && snapshot.status === 'pending') await enqueue('snapshot', { scanId }, { maxAttempts: 1, dedupeKey: `snapshot:${scanId}` });
   if (s.kind === 'scheduled' && s.user_id && comparison) {
     const user = await db.one('SELECT email, email_opt_out FROM users WHERE id = $1', [s.user_id]);
     if (user && !user.email_opt_out && (comparison.scoreChange || comparison.regressed.length)) {
@@ -120,7 +124,12 @@ async function cleanup() {
   }
 }
 
-const handlers = { scan, visibility, noop: async () => {}, schedule: scheduleDue, cleanup };
+const snapshot = async ({ scanId }) => runSnapshot(scanId);
+snapshot.onFinalFailure = async ({ scanId }) => {
+  await db.query(`UPDATE scans SET snapshot = $2 WHERE id = $1 AND snapshot->>'status' = 'pending'`, [scanId, { status: 'error', reason: 'The AI platform did not answer this time. A free account includes a 3 question answer sample you can run later.' }]);
+};
+
+const handlers = { scan, visibility, snapshot, noop: async () => {}, schedule: scheduleDue, cleanup };
 
 module.exports = handlers;
 module.exports.startPaidMonitoring = startPaidMonitoring;

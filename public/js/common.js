@@ -130,4 +130,39 @@
     const idx = Math.max(0, steps.findIndex(s => s[0] === (progress && progress.step)));
     return el('ol', { class: 'progress-steps', 'aria-live': 'polite' }, steps.map((s, i) => el('li', { class: i < idx ? 'done' : i === idx ? 'active' : '' }, i < idx ? '✓ ' : i === idx ? el('span', { class: 'spinner', 'aria-hidden': 'true' }) : '○ ', i === idx && progress && progress.message ? progress.message : s[1])));
   };
+  // Ready to paste starter fix (free). Content is plain text shown in <pre>, never parsed as HTML.
+  GS.freeFixCard = function (fix, { footer } = {}) {
+    if (!fix) return null;
+    const copy = el('button', { class: 'button small ghost', type: 'button', onclick: async e => { try { await navigator.clipboard.writeText(fix.content); e.target.textContent = 'Copied'; } catch (err) { e.target.textContent = 'Select the text to copy'; } } }, 'Copy');
+    return el('div', { class: 'card' },
+      el('h2', {}, 'Your first fix, ready to paste'),
+      el('p', {}, el('strong', {}, `Fix #${fix.rank}: ${fix.title}. `), fix.where),
+      el('pre', { class: 'code' }, fix.content),
+      el('div', { class: 'row-actions' }, copy),
+      el('p', { class: 'muted' }, fix.note),
+      footer || null);
+  };
+
+  // One free AI answer for the preview. The answer is model output: rendered as text only.
+  GS.snapshotCard = function (snap, { offer } = {}) {
+    if (!snap) return null;
+    const card = el('div', { class: 'card snapshot-card', id: 'ai-answer', 'aria-live': 'polite' });
+    const h = el('h2', {}, 'What an AI assistant answered');
+    if (snap.status === 'pending') { card.append(h, el('p', {}, el('span', { class: 'spinner', 'aria-hidden': 'true' }), 'Asking an AI assistant one question your customers ask. This takes a few seconds.')); return card; }
+    if (snap.status === 'needs_context') { card.append(h, el('p', {}, snap.reason, ' ', el('a', { href: '/#scan' }, 'Scan again with these details'), '.')); return card; }
+    if (snap.status !== 'complete') { card.append(h, el('div', { class: 'notice warn' }, snap.question ? `We tried: "${snap.question}". ` : '', snap.reason || 'No answer this time.')); return card; }
+    const platform = GS.platformName[snap.provider] || snap.provider;
+    const verdict = snap.mentioned
+      ? el('p', { class: 'snapshot-verdict good' }, el('strong', {}, `It mentioned ${snap.businessName}.`), snap.cited ? ' It also cited your website as a source.' : ' It did not cite your website as a source.')
+      : el('p', { class: 'snapshot-verdict bad' }, el('strong', {}, `It did not mention ${snap.businessName}.`), ' Read who it named instead.');
+    card.append(h,
+      el('p', { class: 'muted' }, `We asked ${platform} through its official API, with web search on and the location set to ${[snap.location?.city, snap.location?.region].filter(Boolean).join(', ')}:`),
+      el('p', { class: 'snapshot-question' }, `"${snap.question}"`),
+      verdict,
+      el('div', { class: 'answer' }, snap.answer + (snap.truncated ? ' …' : '')),
+      snap.sources && snap.sources.length ? el('p', { class: 'snapshot-sources' }, el('strong', {}, 'Sources it cited: '), snap.sources.map((x, i) => [i ? ' · ' : '', GS.safeLink(x.url, x.domain)]).flat()) : el('p', { class: 'muted' }, 'It cited no sources.'),
+      el('p', { class: 'muted' }, 'One answer is a snapshot, not a ranking. Answers change between runs and can differ from what people see in the ChatGPT, Claude or Perplexity apps.'),
+      offer || null);
+    return card;
+  };
 })();

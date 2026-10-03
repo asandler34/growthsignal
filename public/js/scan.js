@@ -23,8 +23,27 @@
     return el('div', { class: 'card cta-card' },
       el('h2', {}, 'Save this report and see the evidence'),
       el('p', {}, 'A free account adds:'),
-      el('ul', { class: 'lock-list' }, ['The evidence behind every check', 'All recommendations, not just the top three', 'Which AI and search crawlers you block', 'Business facts we detected on your pages', 'One free AI answer sample: does an AI assistant mention you for 3 local questions?', 'Report history when you rescan'].map(t => el('li', {}, t))),
+      el('ul', { class: 'lock-list' }, ['The evidence behind every check', 'All recommendations, not just the top three', 'Which AI and search crawlers you block', 'Business facts we detected on your pages', 'A free AI answer sample: does an AI assistant mention you for 3 local questions?', 'Report history when you rescan'].map(t => el('li', {}, t))),
       el('p', { class: 'muted' }, 'No password and no card. We email you a sign in link.'), form);
+  }
+
+  function snapshotCard(snap) {
+    const offer = snap.status === 'complete' ? el('div', { class: 'snapshot-offer' },
+      el('span', {}, el('strong', {}, 'Answers change. '), 'Check re-asks your questions every month on two AI platforms, rescans your site weekly, and emails you when something changes. $9 a month, cancel anytime.'),
+      me ? el('a', { class: 'button small', href: '/app/billing' }, 'Track it with Check') : el('a', { class: 'button small', href: '#save' }, 'Save free, then track it')) : null;
+    return GS.snapshotCard(snap, { offer });
+  }
+
+  function pollSnapshot(tries = 0) {
+    if (tries > 40) return;
+    setTimeout(async () => {
+      try {
+        const scan = await api(`/api/scans/${encodeURIComponent(id)}`);
+        const current = document.getElementById('ai-answer');
+        if (current && scan.snapshot) current.replaceWith(snapshotCard(scan.snapshot));
+        if (!scan.snapshot || scan.snapshot.status === 'pending') pollSnapshot(tries + 1);
+      } catch (e) { pollSnapshot(tries + 1); }
+    }, 2500);
   }
 
   function failed(scan) {
@@ -53,6 +72,13 @@
     if (!owned && !shared && !me) nodes.push(el('p', {}, el('a', { href: '#save' }, 'Save this report free'), ' to see the evidence behind each finding and run a free AI answer sample.'));
     if (!owned && !shared && me) nodes.push(el('div', { class: 'notice' }, 'You are signed in. ', el('a', { href: '/app' }, 'Add this site in your dashboard'), ' to save it and see evidence.'));
     const report = GS.renderReport(scan.report, { full: owned });
+    // Free value before sign up: one real AI answer right after the score, one ready to paste fix after the priorities.
+    if (!shared && scan.snapshot) report.insertBefore(snapshotCard(scan.snapshot), report.children[1] || null);
+    if (!shared && scan.freeFix) {
+      const next = [...report.children].find(n => n.querySelector && n.querySelector('h2') && n.querySelector('h2').textContent === 'What to do next');
+      report.insertBefore(GS.freeFixCard(scan.freeFix, { footer: el('p', {}, 'Improve builds every fix from facts you confirm, then checks it worked. ', el('a', { href: '/#pricing' }, 'See plans')) }), next ? next.nextSibling : null);
+    }
+    if (!shared && scan.snapshot && scan.snapshot.status === 'pending') pollSnapshot();
     // Put the save offer right after the score and top fixes, before the full check list.
     if (!owned && !shared && !me) { const card = claimCard(scan); card.id = 'save'; const allChecks = [...report.children].find(n => n.tagName === 'H2'); report.insertBefore(card, allChecks || null); }
     nodes.push(report);

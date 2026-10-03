@@ -121,6 +121,7 @@
         el('div', { class: 'history-chart', role: 'img', 'aria-label': `Scores: ${done.map(d => d.score).join(', ')}` }, done.map(d => el('span', { style: { height: `${Math.max(4, d.score)}%` }, title: `${d.score} on ${GS.fmtDay(d.completed_at)}` }))),
         el('p', { class: 'muted' }, `${done.length} completed scans. Latest ${done[done.length - 1].score}, first ${done[0].score}.`)));
     }
+    if (shown && shown.freeFix && !data.plan.fixKit) nodes.push(GS.freeFixCard(shown.freeFix, { footer: el('p', {}, 'Improve builds every fix from facts you confirm. ', el('a', { href: '/app/billing' }, 'Compare plans')) }));
     if (shown) nodes.push(el('p', { class: 'muted' }, `Showing the scan from ${GS.fmtDate(shown.completedAt)} (${shown.kind}).`), GS.renderReport(shown.report, { full: true }));
     else if (!latestScan) nodes.push(el('div', { class: 'empty' }, 'No scans yet. Run your first scan above.'));
     panel.replaceChildren(...nodes);

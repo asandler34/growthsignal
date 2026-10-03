@@ -49,7 +49,6 @@ fs.mkdirSync(OUT, { recursive: true });
 
     // Real scan of the fixture site
     await page.fill('#scan-url', site.origin + '/');
-    await page.click('.scan-more summary');
     await page.fill('#scan-name', 'Summit Plumbing');
     await page.fill('#scan-category', 'plumber');
     await page.fill('#scan-city', 'Denver');
@@ -61,6 +60,10 @@ fs.mkdirSync(OUT, { recursive: true });
     const scoreText = await page.textContent('.score-dial strong');
     check('preview report shows a real score', /^\d+$/.test(scoreText.trim()), scoreText);
     check('preview hides evidence until sign up', (await page.locator('.evidence').count()) === 0);
+    await page.waitForSelector('.snapshot-verdict', { timeout: 30000 });
+    await page.screenshot({ path: path.join(OUT, '02b-free-ai-answer.png'), fullPage: true });
+    check('free preview shows a real AI answer with the question asked', /Who are the best plumbers in Denver, CO\?/.test(await page.textContent('#ai-answer')));
+    check('free AI answer offers tracking right under it', /\$9 a month/.test(await page.textContent('#ai-answer')));
 
     // Save report with email, open the magic link
     const before = outbox.length;

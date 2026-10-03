@@ -1,7 +1,7 @@
 /* GrowthSignal product UI. Extends the brand tokens defined in style.css. */
 :root{--bg:#101111;--surface:#171919;--surface2:#1d2020;--text:#f2f4ef;--muted:#969d96;--lime:#d4fa77;--border:#2b302d;--warn:#ffc46b;--bad:#ff8a7a;--good:#9fe870;--font:'DM Sans',Arial,sans-serif}
 body.app-body,body.auth-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55}
-.app-body a{color:var(--lime)}
+.app-body a{color:var(--lime)}.app-body a.button{color:#15200d}.app-body a.button.ghost{color:var(--text)}.app-body a.button.danger{color:var(--bad)}
 .app-body h1,.app-body h2,.app-body h3,.auth-body h1{font-family:'Manrope',var(--font);letter-spacing:-.6px;line-height:1.2;margin:0 0 10px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 .button{border:0;background:var(--lime);color:#15200d;border-radius:7px;padding:12px 18px;display:inline-flex;align-items:center;gap:10px;font-weight:650;font-size:15px;min-height:46px;cursor:pointer;text-decoration:none}
@@ -92,3 +92,8 @@ table.data th{color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.
   .lock-list{columns:1}
   .app-header{flex-wrap:wrap}
 }
+
+.snapshot-question{font-size:17px;font-weight:600;margin:6px 0 10px}
+.snapshot-verdict{font-size:16px;margin:0 0 10px}.snapshot-verdict.good strong{color:var(--good)}.snapshot-verdict.bad strong{color:var(--bad)}
+.snapshot-offer{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row-actions{display:flex;gap:8px;margin:8px 0}

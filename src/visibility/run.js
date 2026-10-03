@@ -136,4 +136,4 @@ async function summarize(runId, site, competitors) {
   };
 }
 
-module.exports = { runVisibility, summarize };
+module.exports = { withRetry, runVisibility, summarize };
