@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.pgdata/
+coverage/
+*.log
+.DS_Store
+.openai/
