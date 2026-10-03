@@ -37,7 +37,8 @@ function detectMention(text, { name, domain }) {
 
 function detectCitation(citations, domain) {
   const d = bareDomain(domain);
-  const hits = (citations || []).filter(c => onDomain(hostOf(c.url) || bareDomain(c.title), d));
+  // Sources the model only retrieved, without citing them in the answer, do not count as citations.
+  const hits = (citations || []).filter(c => !c.retrievedOnly && onDomain(hostOf(c.url) || bareDomain(c.title), d));
   return { cited: hits.length > 0, urls: hits.map(h => h.url) };
 }
 

@@ -50,13 +50,15 @@ const config = {
 
   ai: {
     openaiKey: env.OPENAI_API_KEY || '',
-    openaiModel: env.OPENAI_MODEL || 'gpt-5-mini',
+    openaiModel: env.OPENAI_MODEL || 'gpt-6-luna',
     anthropicKey: env.ANTHROPIC_API_KEY || '',
     anthropicModel: env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
     geminiKey: env.GEMINI_API_KEY || '',
+    // Off by default pending legal review of Google's grounding terms (D-023).
+    geminiEnabled: bool(env.GEMINI_ENABLED),
     geminiModel: env.GEMINI_MODEL || 'gemini-2.5-flash',
     perplexityKey: env.PERPLEXITY_API_KEY || '',
-    perplexityModel: env.PERPLEXITY_MODEL || 'sonar',
+    perplexityModel: env.PERPLEXITY_MODEL || 'perplexity/sonar',
     // Optional override for tests: route provider calls to a local stub server.
     baseUrlOverride: env.AI_BASE_URL_OVERRIDE || '',
     // Hard daily spend ceiling across all customers, in US cents.

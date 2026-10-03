@@ -17,8 +17,10 @@ function startWorker() {
   const t1 = setInterval(tick, config.worker.schedulerIntervalMs);
   const t2 = setInterval(daily, 24 * 3600 * 1000);
   setTimeout(tick, 5000);
+  // Also run housekeeping shortly after start, so frequent deploys do not postpone it indefinitely.
+  const t3 = setTimeout(daily, 60000);
   log.info('worker.started', { concurrency: config.worker.concurrency });
-  return { worker, stop: async () => { clearInterval(t1); clearInterval(t2); await worker.stop(); } };
+  return { worker, stop: async () => { clearInterval(t1); clearInterval(t2); clearTimeout(t3); await worker.stop(); } };
 }
 
 module.exports = { startWorker };

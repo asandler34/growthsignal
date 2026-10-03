@@ -1,6 +1,7 @@
 'use strict';
 // Official API integrations for sampling AI answers with web search enabled.
 // We never automate or scrape consumer apps (ChatGPT, Claude.ai, Gemini app, Perplexity.ai).
+// Prices and request shapes were checked against provider docs on 2026-10-03; see docs/strategy/04-pricing-unit-economics.md.
 // API answers can differ from what a person sees in a consumer app: different system prompts,
 // personalization, location, model versions and retrieval settings.
 const { config } = require('../config');
@@ -124,29 +125,48 @@ const providers = {
 
   perplexity: {
     id: 'perplexity',
-    label: 'Perplexity Sonar API',
-    surface: 'Perplexity Sonar chat completions API',
+    label: 'Perplexity Agent API with web search',
+    surface: 'Perplexity Agent API (/v1/agent), web_search tool',
     configured: () => !!config.ai.perplexityKey,
     model: () => config.ai.perplexityModel,
     async ask({ prompt, location }) {
+      // Sonar chat completions support ended 2026-09-27; the Agent API is the supported surface.
       const model = config.ai.perplexityModel;
-      const web_search_options = { search_context_size: 'low' };
-      if (location && (location.city || location.region)) web_search_options.user_location = { country: location.country || 'US', city: location.city || undefined, region: location.region || undefined };
-      const json = await postJson(`${base('https://api.perplexity.ai', 'perplexity')}/chat/completions`, { authorization: `Bearer ${config.ai.perplexityKey}` }, { model, messages: [{ role: 'user', content: prompt }], web_search_options });
-      const text = json.choices?.[0]?.message?.content || '';
-      const results = Array.isArray(json.search_results) && json.search_results.length ? json.search_results.map(r => ({ url: r.url, title: r.title || null })) : (json.citations || []).map(url => ({ url, title: null }));
+      const tool = { type: 'web_search', search_context_size: 'low', max_results: 10 };
+      if (location && (location.city || location.region)) tool.filters = { user_location: { country: location.country || 'US', city: location.city || undefined, region: location.region || undefined } };
+      const json = await postJson(`${base('https://api.perplexity.ai/v1', 'perplexity')}/agent`, { authorization: `Bearer ${config.ai.perplexityKey}` }, { model, input: prompt, tools: [tool] });
+      let text = '';
+      const citations = [];
+      const seen = new Set();
+      let searches = 0;
+      const results = [];
+      for (const item of json.output || []) {
+        if (item.type === 'search_results') { searches++; results.push(...(item.results || [])); }
+        if (item.type === 'message') for (const c of item.content || []) if (c.type === 'output_text') text += c.text || '';
+      }
+      if (!text && typeof json.output_text === 'string') text = json.output_text;
+      // Inline [n] markers refer to result ids; unreferenced results were retrieved but not cited.
+      const referenced = new Set([...text.matchAll(/\[(\d{1,3})\]/g)].map(m => Number(m[1])));
+      for (const r of results) if (r.url && !seen.has(r.url)) { seen.add(r.url); citations.push({ url: r.url, title: r.title || null, ...(referenced.has(Number(r.id)) ? {} : { retrievedOnly: true }) }); }
       const u = json.usage || {};
       const p = PRICES.perplexity;
-      const usd = typeof u.cost?.total_cost === 'number' ? u.cost.total_cost : (u.prompt_tokens || 0) * p.inputPerMTok / 1e6 + (u.completion_tokens || 0) * p.outputPerMTok / 1e6 + p.perRequestLow;
-      return { model: json.model || model, text, citations: results, searches: 1, costCents: cents(usd) };
+      const usd = typeof u.cost?.total_cost === 'number' ? u.cost.total_cost
+        : (u.input_tokens || 0) * p.inputPerMTok / 1e6 + (u.output_tokens || 0) * p.outputPerMTok / 1e6 + Math.max(searches, 1) * p.perSearch;
+      return { model: json.model || model, text, citations, searches, costCents: cents(usd) };
     },
   },
 };
 
-const ORDER = ['openai', 'perplexity', 'gemini', 'anthropic'];
+// Every adapter we have, in sampling priority order.
+const ORDER = ['openai', 'perplexity', 'anthropic', 'gemini'];
+
+// Gemini is off unless GEMINI_ENABLED=true: Google's grounding terms restrict caching and analyzing
+// grounded results and require showing Search Suggestions to the prompting user (decision D-023).
+function enabled(id) { return id !== 'gemini' || config.ai.geminiEnabled; }
+function activeOrder() { return ORDER.filter(enabled); }
 
 function listProviders() {
-  return ORDER.map(id => ({ id, label: providers[id].label, surface: providers[id].surface, configured: providers[id].configured(), model: providers[id].model() }));
+  return activeOrder().map(id => ({ id, label: providers[id].label, surface: providers[id].surface, configured: providers[id].configured(), model: providers[id].model() }));
 }
 
-module.exports = { providers, listProviders, ORDER };
+module.exports = { providers, listProviders, activeOrder, ORDER };

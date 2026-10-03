@@ -43,7 +43,7 @@
   GS.money = cents => (cents % 100 === 0 ? `$${cents / 100}` : `$${(cents / 100).toFixed(2)}`);
   GS.pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   GS.statusLabel = { pass: 'Pass', partial: 'Partial', fail: 'Needs work', not_checked: 'Not checked', not_applicable: 'Not applicable' };
-  GS.platformName = { openai: 'OpenAI (ChatGPT models)', anthropic: 'Anthropic (Claude models)', gemini: 'Google Gemini', perplexity: 'Perplexity Sonar' };
+  GS.platformName = { openai: 'OpenAI (ChatGPT models)', anthropic: 'Anthropic (Claude models)', gemini: 'Google Gemini', perplexity: 'Perplexity' };
 
   GS.safeLink = function (url, label) {
     try {

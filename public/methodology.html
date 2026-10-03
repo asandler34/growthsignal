@@ -58,7 +58,7 @@
 <h2>2. Observed AI visibility (answer samples)</h2>
 <h3>How a sample is taken</h3>
 <ul>
-<li><strong>Access method.</strong> Official developer APIs only, with web search or grounding enabled: OpenAI Responses API with the web search tool, Anthropic Messages API with the web search tool, Google Gemini API with Google Search grounding, and Perplexity's Sonar API. We do not automate or scrape the ChatGPT, Claude, Gemini or Perplexity consumer apps.</li>
+<li><strong>Access method.</strong> Official developer APIs only, with web search or grounding enabled: OpenAI Responses API with the web search tool, Anthropic Messages API with the web search tool, and the Perplexity Agent API with its web search tool. We do not automate or scrape the ChatGPT, Claude, Gemini or Perplexity consumer apps, whose terms prohibit automated access. Google Gemini is not sampled: Google's terms for search grounded answers restrict analyzing them, so we leave it out rather than work around those terms.</li>
 <li><strong>Questions.</strong> Written the way a customer asks, from your business type, services and town, for example "Who are the best plumbers in Denver, CO?". You can edit them. One question asks about your business by name to check the facts AI repeats.</li>
 <li><strong>Context.</strong> Each question names the town explicitly. Where the API supports an approximate user location, we pass your city, state and country. Language: English. No conversation history or personalization.</li>
 <li><strong>Recorded with every answer.</strong> Platform, model identifier returned by the API, question, repeat number, location passed, time, answer text (trimmed to 4,000 characters) and the source URLs returned.</li>
@@ -67,7 +67,7 @@
 <h3>Definitions</h3>
 <ul>
 <li><strong>Mentioned:</strong> the answer text contains your business name (ignoring case, punctuation and suffixes such as LLC) or your domain.</li>
-<li><strong>Cited:</strong> a source URL returned for that answer is on your website's domain. A Yelp or directory page about you counts as a source, not as a citation of your website.</li>
+<li><strong>Cited:</strong> a source the answer cites is on your website's domain. Pages the platform only retrieved but did not cite do not count. A Yelp or directory page about you counts as a source, not as a citation of your website.</li>
 <li><strong>Unavailable:</strong> the platform is not connected, or our daily safety budget was reached. <strong>Failed:</strong> the platform returned an error after a retry. Neither is counted as "not mentioned"; both are excluded from rates and shown in your report.</li>
 <li><strong>Possible inaccurate fact:</strong> when asked about you by name, an answer included a phone number different from the one you confirmed.</li>
 </ul>

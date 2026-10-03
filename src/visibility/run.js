@@ -34,6 +34,7 @@ async function runVisibility(runId) {
     const base = { run_id: runId, provider: t.pid, model: p ? p.model() : null, prompt: t.prompt.text, intent: t.prompt.intent || 'discovery', repeat_index: t.r, location };
     if (!p || !p.configured()) return insertSample({ ...base, status: 'unavailable', error: 'This platform is not connected yet.' });
     if (budgetExhausted || !(await reserveAiBudget(EST_CENTS_PER_SAMPLE, config.ai.dailyBudgetCents))) {
+      if (!budgetExhausted) log.warn('ai.budget_reached', { runId: run.id, dailyBudgetCents: config.ai.dailyBudgetCents });
       budgetExhausted = true;
       return insertSample({ ...base, status: 'unavailable', error: 'Daily sampling capacity reached. This sample will be retried in the next scheduled run.' });
     }

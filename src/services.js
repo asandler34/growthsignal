@@ -5,7 +5,7 @@ const { enqueue } = require('./jobs/queue');
 const { validateUrl } = require('./lib/safe-fetch');
 const { planFor, consume } = require('./lib/entitlements');
 const { defaultPrompts } = require('./visibility/prompts');
-const { providers, ORDER } = require('./visibility/providers');
+const { providers, activeOrder } = require('./visibility/providers');
 
 class UserError extends Error {
   constructor(message, status = 400, code) { super(message); this.status = status; this.code = code; this.expose = true; }
@@ -103,7 +103,7 @@ async function startAccountScan(user, site, { kind = 'account' } = {}) {
   return createScan({ url: site.url, domain: site.domain, kind, userId: user.id, siteId: site.id, context: { businessName: site.business_name, category: site.category, city: site.city, region: site.region, services: site.services }, });
 }
 
-function anyProviderConfigured() { return ORDER.some(id => providers[id].configured()); }
+function anyProviderConfigured() { return activeOrder().some(id => providers[id].configured()); }
 
 async function startVisibilityRun(user, site, { trigger = 'manual' } = {}) {
   const { plan } = await planFor(user.id);
@@ -125,9 +125,9 @@ async function startVisibilityRun(user, site, { trigger = 'manual' } = {}) {
   }
   await seedPrompts(site, limits.prompts);
   const prompts = await db.many('SELECT text, intent FROM prompts WHERE site_id = $1 AND active ORDER BY source DESC, created_at LIMIT $2', [site.id, limits.prompts]);
-  const configured = ORDER.filter(id => providers[id].configured());
+  const configured = activeOrder().filter(id => providers[id].configured());
   const platforms = configured.slice(0, limits.platforms);
-  const notConnected = ORDER.filter(id => !providers[id].configured()).slice(0, Math.max(0, limits.platforms - platforms.length));
+  const notConnected = activeOrder().filter(id => !providers[id].configured()).slice(0, Math.max(0, limits.platforms - platforms.length));
   const competitors = limits.competitors ? await db.many('SELECT name, domain FROM competitors WHERE site_id = $1 ORDER BY created_at LIMIT $2', [site.id, limits.competitors]) : [];
   const run = await db.one(
     `INSERT INTO visibility_runs (site_id, user_id, trigger, config) VALUES ($1,$2,$3,$4) RETURNING *`,
