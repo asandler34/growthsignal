@@ -111,6 +111,7 @@ CREATE TABLE visibility_samples (
   provider text NOT NULL,
   model text,
   prompt text NOT NULL,
+  intent text NOT NULL DEFAULT 'discovery',
   repeat_index integer NOT NULL DEFAULT 0,
   location jsonb,
   status text NOT NULL, -- ok | unavailable | error
