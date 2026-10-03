@@ -1,0 +1,62 @@
+# Render Blueprint. One web service runs the HTTP server, job worker and scheduler (ROLE=all),
+# plus a managed Postgres database. Secrets marked sync:false are entered in the Render dashboard.
+services:
+  - type: web
+    name: growthsignal
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ROLE
+        value: all
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: growthsignal-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: BASE_URL
+        sync: false
+      - key: OPERATOR_EMAIL
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_FROM
+        value: "GrowthSignal <hello@growthsignal.ai>"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_CHECK_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_CHECK_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_IMPROVE_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_IMPROVE_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_GROW_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_GROW_ANNUAL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AI_DAILY_BUDGET_CENTS
+        value: "2000"
+databases:
+  - name: growthsignal-db
+    plan: basic-256mb
+    postgresMajorVersion: "16"
