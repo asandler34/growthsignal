@@ -1,0 +1,27 @@
+{
+  "name": "growthsignal",
+  "version": "1.0.0",
+  "description": "This archive contains the current static marketing website, including all assets.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asandler34/growthsignal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asandler34/growthsignal/issues"
+  },
+  "homepage": "https://github.com/asandler34/growthsignal#readme",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "express": "^5.2.1",
+    "ipaddr.js": "^2.5.0",
+    "pg": "^8.23.1",
+    "stripe": "^23.0.0"
+  }
+}
