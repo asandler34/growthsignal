@@ -15,10 +15,12 @@ function normalizeSiteUrl(raw) {
   let s = String(raw || '').trim();
   if (!s) throw new UserError('Enter your website address.');
   if (s.length > 300) throw new UserError('That address is too long.');
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s) && !/^https?:\/\//i.test(s)) throw new UserError('Only http and https websites can be scanned.');
   if (!/^https?:\/\//i.test(s)) s = `https://${s}`;
   let u;
   try { u = validateUrl(s); } catch (e) { throw new UserError(e.message); }
-  if (!/\.[a-z]{2,}$/i.test(u.hostname) && !require('./config').config.scanner.allowPrivateNetworks) throw new UserError('Enter a public website address, like example.com.');
+  const isIp = require('net').isIP(u.hostname.replace(/^\[|\]$/g, ''));
+  if (!/\.[a-z]{2,}$/i.test(u.hostname) && !(isIp && require('./config').config.scanner.allowPrivateNetworks)) throw new UserError('Enter a public website address, like example.com.');
   u.hash = '';
   return { url: u.origin + (u.pathname === '/' ? '/' : u.pathname) + u.search, domain: u.hostname.toLowerCase().replace(/^www\./, '') };
 }

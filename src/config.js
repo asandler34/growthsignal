@@ -70,7 +70,7 @@ const config = {
     maxBytes: int(env.SCANNER_MAX_BYTES, 2 * 1024 * 1024),
     maxRedirects: 5,
     // Only for automated tests against local fixture servers. Never enable in production.
-    allowPrivateNetworks: bool(env.SCANNER_ALLOW_PRIVATE, false) && !isProd,
+    allowPrivateNetworks: isProd ? false : env.SCANNER_ALLOW_PRIVATE === 'loopback' ? 'loopback' : bool(env.SCANNER_ALLOW_PRIVATE, false),
   },
 
   limits: {

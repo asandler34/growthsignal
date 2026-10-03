@@ -26,8 +26,19 @@ function isPublicAddress(address) {
   return addr.range() === 'unicast';
 }
 
+// Test only relaxations: true allows any address; 'loopback' allows only 127.0.0.0/8 and ::1, so
+// redirect chains from a local fixture to other private ranges are still blocked.
 function allowPrivate(opts) {
   return opts.allowPrivateNetworks ?? config.scanner.allowPrivateNetworks;
+}
+function permitted(address, opts) {
+  const mode = allowPrivate(opts);
+  if (mode === true) return true;
+  if (isPublicAddress(address)) return true;
+  if (mode === 'loopback') {
+    try { let a = ipaddr.parse(address); if (a.kind() === 'ipv6' && a.isIPv4MappedAddress()) a = a.toIPv4Address(); return a.range() === 'loopback'; } catch { return false; }
+  }
+  return false;
 }
 
 // Validates the URL shape. Returns a URL object or throws FetchBlockedError.
@@ -37,11 +48,15 @@ function validateUrl(raw, opts = {}) {
   if (!['http:', 'https:'].includes(u.protocol)) throw new FetchBlockedError('Only http and https URLs are supported', 'invalid_scheme');
   if (u.username || u.password) throw new FetchBlockedError('URLs with credentials are not allowed', 'credentials');
   const host = u.hostname.replace(/^\[|\]$/g, '').toLowerCase();
-  if (!allowPrivate(opts)) {
-    if (u.port && !['80', '443'].includes(u.port)) throw new FetchBlockedError('Only standard web ports are scanned', 'port');
+  const mode = allowPrivate(opts);
+  if (mode !== true) {
     if (net.isIP(host)) {
-      if (!isPublicAddress(host)) throw new FetchBlockedError('That address is not a public website', 'private_address');
-    } else {
+      if (!permitted(host, opts)) throw new FetchBlockedError('That address is not a public website', 'private_address');
+    }
+  }
+  if (!mode) {
+    if (u.port && !['80', '443'].includes(u.port)) throw new FetchBlockedError('Only standard web ports are scanned', 'port');
+    if (!net.isIP(host)) {
       if (!host.includes('.') || host === 'localhost' || /\.(localhost|local|internal|lan|home|corp|intranet)$/.test(host)) {
         throw new FetchBlockedError('That host is not a public website', 'private_host');
       }
@@ -56,8 +71,8 @@ function makeLookup(opts) {
     dns.lookup(hostname, { all: true, verbatim: true }, (err, addresses) => {
       if (err) return callback(err);
       if (!addresses || !addresses.length) return callback(new FetchBlockedError('Host did not resolve', 'dns'));
-      if (!allowPrivate(opts)) {
-        const bad = addresses.find(a => !isPublicAddress(a.address));
+      {
+        const bad = addresses.find(a => !permitted(a.address, opts));
         if (bad) return callback(new FetchBlockedError('Host resolves to a non-public address', 'private_address'));
       }
       const chosen = addresses[0];
