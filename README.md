@@ -1,27 +1,39 @@
-# GrowthSignal.ai source handoff
+# GrowthSignal
 
-This archive contains the current static marketing website, including all assets.
+See whether AI recommends your business, and exactly what to fix.
 
-## Mac setup
-Download growthsignal-source.zip into Downloads. In Terminal run:
+GrowthSignal is a self service product for local service businesses and the web designers who look after their sites. It does three separate things and never blends them into one score:
 
-mkdir -p "$HOME/Projects"
-unzip -n "$HOME/Downloads/growthsignal-source.zip" -d "$HOME/Projects"
-open "$HOME/Projects/growthsignal"
+1. **Website readiness** (free, no account): a bounded crawl of the site scored on a published 19 check rubric, with evidence for every finding.
+2. **Observed AI visibility** (account): realistic customer questions sent to AI platforms through their official APIs with web search on, repeated, with every answer, source and uncertainty range shown.
+3. **Improvement and monitoring** (paid): weekly rescans with change alerts, scheduled answer samples, competitor comparison and a copy and paste fix kit built from facts the owner confirms.
 
-The project folder is ~/Projects/growthsignal. Open this folder in Claude Code.
-If Safari automatically extracted the download, move the downloaded growthsignal folder into ~/Projects instead.
+No placement is ever guaranteed. API answers can differ from what people see in consumer apps, and the product says so wherever results appear.
 
-## Preview
-From the project folder run: python3 -m http.server 8080 --directory dist
-Then visit http://localhost:8080.
+## Stack
 
-## Contents
-- dist/index.html: page structure and copy
-- dist/style.css: styling
-- dist/app.js: interactive sample reports, pricing and FAQ assistant
-- dist/assets/: logos and images
-- .openai/hosting.json: existing Sites hosting identity; do not reuse it for a different site
+Node 22, Express 5, Postgres 16, vanilla JS front end (`public/`), Postgres backed job queue, Stripe Checkout and Customer Portal, Resend or Postmark email. Deploys to Vercel (`vercel.json`, `api/index.js`, Vercel Cron) or as one long running process (Docker, Render). Operated by Granite Coast Ventures, LLC.
 
-The actual audit backend, accounts and billing are not implemented. See CLAUDE.md for context and paste the full strategy/build prompt from our conversation into Claude Code.
-No Git history, credentials or API keys are included.
+## Run locally
+
+```
+npm install
+cp .env.example .env
+createdb growthsignal
+npm run dev                 # http://localhost:3000, sign in links print to the log
+TEST_DATABASE_URL=postgres://postgres@localhost:5432/growthsignal_test npm test
+```
+
+## Documentation
+
+| Doc | Contents |
+|---|---|
+| `docs/project-brief.md` | What we are building, for whom, and the rules |
+| `docs/readiness.md` | Launch readiness: tested, awaiting credentials, deferred, blocking; exact launch steps |
+| `docs/operations.md` | Deploy, environment variables, Stripe, email, domain, scheduled jobs, operator guide |
+| `docs/checklist.md` | Implementation checklist |
+| `docs/decision-log.md` | Decisions with reasons |
+| `docs/progress.md` | Progress notes |
+| `docs/strategy/01` to `06` | Business pressure test, competitive research and positioning, product definition, pricing and unit economics, architecture, go to market |
+| `docs/research/` | Source research with URLs and check dates |
+| `/methodology` (public page) | Customer facing rubric and sampling method |

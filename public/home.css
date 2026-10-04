@@ -1,0 +1,28 @@
+/* Homepage additions on top of style.css */
+.scan-form{margin-top:30px;max-width:620px}
+.scan-form label{display:block;font-size:13px;color:#c9cfc6;margin:0 0 6px;font-weight:550}
+.scan-form input,.contact-form input,.contact-form select,.contact-form textarea{font:inherit;color:var(--text);background:#0c0d0d;border:1px solid #3a403b;border-radius:7px;padding:13px 14px;width:100%;box-sizing:border-box}
+.scan-form input:focus,.contact-form input:focus,.contact-form select:focus,.contact-form textarea:focus{border-color:var(--lime);outline:none}
+.scan-row{display:flex;gap:10px}
+.scan-row input{flex:1;min-width:0;font-size:17px}
+.scan-row .button{flex:none}
+.scan-more{margin-top:12px;font-size:14px;color:#c9cfc6}
+.scan-more summary{cursor:pointer;color:var(--muted)}
+.scan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.scan-status{min-height:24px;margin-top:10px;font-size:14px}
+.scan-status .err{color:#ffb3a8}
+.price-grid.four{grid-template-columns:repeat(4,1fr)}
+.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.example-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.example-card h3{font-size:20px;margin:14px 0 10px;letter-spacing:-.5px}
+.example-card p{color:#c9cfc6;font-size:15px}
+.contact-form{display:grid;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.contact-form label{font-size:13px;color:#c9cfc6;font-weight:550}
+.contact-form .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.notice-ok{color:var(--lime)}
+.notice-err{color:#ffb3a8}
+@media (max-width:1100px){.price-grid.four{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){
+  .scan-row{flex-direction:column}
+  .scan-grid,.example-grid,.price-grid.four{grid-template-columns:1fr}
+}

@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /app
+Disallow: /scan/
+Disallow: /r/
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://growthsignal.ai/sitemap.xml
