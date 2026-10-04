@@ -12,7 +12,7 @@ No placement is ever guaranteed. API answers can differ from what people see in 
 
 ## Stack
 
-Node 22, Express 5, Postgres 16, vanilla JS front end (`public/`), Postgres backed job queue, Stripe Checkout and Customer Portal, Resend or Postmark email. One process runs web, worker and scheduler.
+Node 22, Express 5, Postgres 16, vanilla JS front end (`public/`), Postgres backed job queue, Stripe Checkout and Customer Portal, Resend or Postmark email. Deploys to Vercel (`vercel.json`, `api/index.js`, Vercel Cron) or as one long running process (Docker, Render). Operated by Granite Coast Ventures, LLC.
 
 ## Run locally
 

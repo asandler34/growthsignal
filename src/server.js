@@ -325,6 +325,28 @@ function createApp() {
     res.json({ shareUrl: null });
   }));
 
+  // ---------- Scheduled work and operator checks ----------
+  // Called by Vercel Cron (or any scheduler) with "Authorization: Bearer CRON_SECRET".
+  const requireCron = (req, res, next) => {
+    const want = Buffer.from(`Bearer ${config.cronSecret}`);
+    const got = Buffer.from(String(req.get('authorization') || ''));
+    if (!config.cronSecret || got.length !== want.length || !crypto.timingSafeEqual(got, want)) return res.status(401).json({ error: 'Unauthorized' });
+    next();
+  };
+  app.get('/api/cron/tick', requireCron, wrap(async (req, res) => {
+    const handlers = require('./jobs/handlers');
+    const queued = await handlers.scheduleDue();
+    require('./jobs/kick').kick(); // also picks up retries whose backoff has passed
+    res.json({ ok: true, queued });
+  }));
+  app.get('/api/cron/cleanup', requireCron, wrap(async (req, res) => {
+    await require('./jobs/handlers').cleanup();
+    res.json({ ok: true });
+  }));
+  app.get('/api/ops/selftest', requireCron, wrap(async (req, res) => {
+    res.json(await require('./ops/selftest').selfTest());
+  }));
+
   // ---------- Pages ----------
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'], index: 'index.html', maxAge: config.isProd ? '1h' : 0 }));
   const page = file => (req, res) => res.sendFile(path.join(PUBLIC_DIR, file));

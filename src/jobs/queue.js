@@ -4,15 +4,21 @@
 const db = require('../db');
 const log = require('../lib/log');
 
+// Optional hook called after a job is queued. On serverless hosts it starts processing right away (src/jobs/kick.js).
+let onEnqueue = null;
+function setOnEnqueue(fn) { onEnqueue = fn; }
+
 async function enqueue(type, payload = {}, { runAt = new Date(), maxAttempts = 3, dedupeKey = null } = {}) {
   const r = await db.one(
     `INSERT INTO jobs (type, payload, run_at, max_attempts, dedupe_key) VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (dedupe_key) DO NOTHING RETURNING id`,
     [type, payload, runAt, maxAttempts, dedupeKey]);
+  if (r && onEnqueue && new Date(runAt) <= new Date()) onEnqueue();
   return r ? r.id : null;
 }
 
-async function claim(leaseSeconds = 300) {
+// The lease outlasts the longest job (a Grow answer sample run), so a live job is never claimed twice.
+async function claim(leaseSeconds = 900) {
   return db.one(
     `UPDATE jobs SET status = 'running', attempts = attempts + 1, locked_until = now() + ($1 || ' seconds')::interval, updated_at = now()
      WHERE id = (
@@ -93,4 +99,4 @@ class Worker {
   }
 }
 
-module.exports = { enqueue, claim, complete, fail, Worker };
+module.exports = { enqueue, setOnEnqueue, claim, complete, fail, Worker };

@@ -5,7 +5,8 @@ const { config } = require('../config');
 const pool = new Pool({
   connectionString: config.databaseUrl,
   ssl: config.databaseSsl ? { rejectUnauthorized: false } : undefined,
-  max: 10,
+  // Serverless instances are many and short lived; keep each one's share of connections small.
+  max: config.serverless ? 3 : 10,
 });
 
 async function query(text, params) {

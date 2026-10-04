@@ -8,7 +8,7 @@ Everything needed to deploy, configure and run GrowthSignal. Steps marked **[nee
 - One Postgres 16 database. Migrations in `src/db/migrations/` apply automatically at startup under an advisory lock (safe with several instances). Manual run: `npm run migrate`.
 - Health check: `GET /healthz` (checks the database).
 
-### Scheduled work (inside the worker, no external cron needed)
+### Scheduled work (inside the worker on Render/Docker; Vercel Cron plus `waitUntil` on Vercel, see §3)
 
 | Job | When | What |
 |---|---|---|
@@ -38,7 +38,35 @@ See `.env.example` for the full list with comments. Production refuses to start 
 | `AI_DAILY_BUDGET_CENTS` | recommended | Default 2000 ($20 a day) across all customers |
 | `TRUST_PROXY` | behind a proxy | `true` on Render so rate limits see real client IPs |
 
-## 3. Deploy to Render (recommended)
+## 3. Deploy to Vercel (chosen, 2026-10-04)
+
+On Vercel there is no always on worker. `api/index.js` serves every non static request; static files in `public/` come from Vercel's CDN. Queuing a job starts processing right after the response (`waitUntil`, `src/jobs/kick.js`), and Vercel Cron calls `/api/cron/tick` every 10 minutes (schedules and retries) and `/api/cron/cleanup` daily. Migrations run on the first request of each instance under an advisory lock.
+
+**Plan:** Vercel **Pro** is required. Hobby is for non commercial use only, allows cron jobs at most once a day, and caps function duration below what a Grow answer sample run needs (`maxDuration` 800 in `vercel.json`). Put the project in a team owned by Granite Coast Ventures, LLC if possible.
+
+1. Vercel, Add New, Project, import `asandler34/growthsignal`. Framework preset: Other (`vercel.json` sets it). Every branch gets a preview deployment, so PR #1 can be tested before merging.
+2. Storage, Marketplace, **Neon** (Postgres), create and connect it to the project. It sets `DATABASE_URL` (the pooled URL is fine).
+3. Settings, Environment Variables, for Production and Preview, marked Sensitive:
+
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `NODEJS_HELPERS` | `0` (lets Stripe webhook signatures verify) |
+| `SESSION_SECRET` | output of `openssl rand -hex 32` |
+| `CRON_SECRET` | output of `openssl rand -hex 24` |
+| `BASE_URL` | `https://<project>.vercel.app` until the domain is connected, then `https://growthsignal.ai` |
+| `OPERATOR_EMAIL` | where inquiries go |
+| `EMAIL_PROVIDER`, `EMAIL_FROM`, `RESEND_API_KEY` | `resend`, `GrowthSignal <hello@mail.growthsignal.ai>`, key |
+| `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `ANTHROPIC_API_KEY` | API keys (Anthropic: a Console key starting `sk-ant-api`) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` | test mode values (§4) |
+| `AI_DAILY_BUDGET_CENTS` | `2000` |
+
+4. Deploy. Check `https://<url>/healthz` returns `{"ok":true}`.
+5. **Prove it delivers:** `curl -s -H "Authorization: Bearer $CRON_SECRET" https://<url>/api/ops/selftest`. It asks each connected platform "Who are the best plumbers in Denver, CO?" through its API and reports per platform `ok`, `not_connected`, `error` (with the HTTP status, never the key) or `suspect` (no web search happened). It also reports database, email and billing mode. Costs about 5 cents. Locally: `vercel env pull .env && node --env-file=.env scripts/selftest.js`.
+6. Run a free scan of a real site you own with business name, type and town filled in, and confirm the AI answer card shows a real answer.
+7. Preview deployments use the production `BASE_URL` for email links; test sign in on the production URL.
+
+## 3b. Alternative: Render or any Docker host
 
 Cost at launch: about $13 a month (Starter web $7, Basic Postgres $6).
 
@@ -68,6 +96,9 @@ Until DNS is approved, email cannot be sent from `growthsignal.ai`, so sign in w
 
 ## 6. Domain
 
+On Vercel: Settings, Domains, add `growthsignal.ai` and `www.growthsignal.ai`; Vercel shows the exact records (usually an A record `76.76.21.21` for the apex and a CNAME `cname.vercel-dns.com` for www). Add them at the domain registrar. Note: this moves growthsignal.ai off whatever it serves today. Then set `BASE_URL` and update the Stripe webhook URL.
+
+Other hosts: 
 **[needs Adam's authorization]** Point `growthsignal.ai` (or `app.`) at Render: add the custom domain in Render, create the CNAME or A records it shows, wait for the certificate, then set `BASE_URL` to the new origin and update the Stripe webhook URL. The existing static preview host is not reused.
 
 ## 7. AI platform keys

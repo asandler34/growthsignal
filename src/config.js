@@ -17,8 +17,12 @@ const config = {
   isProd,
   isTest: env.NODE_ENV === 'test',
   port: int(env.PORT, 3000),
-  baseUrl: (env.BASE_URL || `http://localhost:${int(env.PORT, 3000)}`).replace(/\/$/, ''),
-  databaseUrl: env.DATABASE_URL || 'postgres://postgres@localhost:5432/growthsignal',
+  baseUrl: (env.BASE_URL || (env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : `http://localhost:${int(env.PORT, 3000)}`)).replace(/\/$/, ''),
+  // Vercel's Postgres integrations (Neon) provide DATABASE_URL or POSTGRES_URL.
+  databaseUrl: env.DATABASE_URL || env.POSTGRES_URL || 'postgres://postgres@localhost:5432/growthsignal',
+  serverless: env.VERCEL === '1',
+  // Vercel sends this as a bearer token on cron requests; also guards the operator self test.
+  cronSecret: env.CRON_SECRET || '',
   databaseSsl: bool(env.DATABASE_SSL, false),
   // web | worker | all. "all" runs the HTTP server and the job worker in one process.
   role: env.ROLE || 'all',
@@ -97,6 +101,7 @@ function validateForProduction() {
   if (!/^https:\/\//.test(config.baseUrl)) problems.push('BASE_URL must be https in production');
   if (!config.email.provider || config.email.provider === 'console') problems.push('EMAIL_PROVIDER must be resend or postmark in production');
   if (config.stripe.secretKey.startsWith('sk_live') && !config.stripe.allowLive) problems.push('Live Stripe key present but STRIPE_ALLOW_LIVE is not set; refusing live billing');
+  if (config.serverless && config.cronSecret.length < 16) problems.push('CRON_SECRET (16+ characters) is required on Vercel so scheduled work runs and cannot be triggered by others');
   return problems;
 }
 

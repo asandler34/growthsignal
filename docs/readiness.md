@@ -29,10 +29,10 @@ Date: 2026-10-03. Branch `claude/growthsignal-launch-w4g88i`, PR #1.
 | Item | Needs | Notes |
 |---|---|---|
 | Live website crawling | A deployed instance with internet | Same code path as fixtures; first real scans should be watched |
-| OpenAI, Perplexity, Anthropic sampling | API keys | Request shapes follow docs read 2026-10-03; Perplexity Agent API nesting of `user_location` under `filters` should be confirmed on the first live call |
+| OpenAI, Perplexity, Anthropic sampling | Keys in Vercel; `/api/ops/selftest` proves each one after deploy | Request shapes follow docs read 2026-10-03; Perplexity Agent API nesting of `user_location` under `filters` should be confirmed on the first live call |
 | Stripe Checkout, Customer Portal, plan changes | Stripe test keys, 6 price ids, webhook secret | Steps in `docs/operations.md` §4 |
 | Transactional email | Resend key and a verified sending domain | Domain verification needs DNS records |
-| Hosting | Render account (or any Docker host) and Postgres | `render.yaml`, `Dockerfile` ready |
+| Hosting | Vercel Pro project and Neon Postgres | `vercel.json` and `api/index.js` ready; serverless mode tested locally (jobs run without a worker, cron routes require the secret); Render and Docker still supported |
 | CI | GitHub Actions on PR #1 | Workflow committed; first run result to be confirmed on GitHub |
 
 ## Deferred (deliberately not in v1)
@@ -45,26 +45,25 @@ Date: 2026-10-03. Branch `claude/growthsignal-launch-w4g88i`, PR #1.
 - Verification of third party listings (Google Business Profile, Yelp).
 - Data export (removed from the privacy page until built).
 
-## Blocking launch
+## Blocking launch (updated 2026-10-04)
 
-1. **Credentials:** Stripe test keys and prices, at least one AI key (OpenAI recommended first), Resend key. Without AI keys the product still works as a readiness scanner and says sampling is not connected.
-2. **Email domain DNS** (SPF/DKIM) **[needs Adam's authorization]**. Sign in depends on email.
-3. **Legal pages:** `terms.html` and `privacy.html` are drafts written for this product. They need the operating legal entity name, address and governing law, and a lawyer's review.
-4. **Going live on billing** **[needs Adam's authorization]**: Stripe account activation and live keys.
-5. **Domain** **[needs Adam's authorization]**: point `growthsignal.ai` at the host, or launch on the host's default domain first.
+1. **Vercel Pro project with Neon Postgres** (Adam's Vercel account). Hobby cannot run this commercially or run its schedules.
+2. **Still missing credentials:** Stripe test keys and the six price ids, a Resend key, the inquiry email address, and an Anthropic Console API key (the key provided starts `sk-ant-usr`, which is not a Console API key). OpenAI and Perplexity keys were provided and go into Vercel only.
+3. **DNS** (authorized 2026-10-04): Resend sending domain records and the Vercel domain records must be added at the registrar by someone with access to it.
+4. **Legal review** of Terms and Privacy (entity, address and New Hampshire governing law are filled in).
+5. **Live billing** still needs Adam's explicit go after test mode passes.
 
 ## Exact launch steps
 
-1. Merge PR #1 into `main`.
-2. Create the Render Blueprint from `render.yaml`; fill secrets (`docs/operations.md` §3).
-3. Create Stripe test products and prices, webhook and portal (§4). Run the five test purchases.
-4. Create the Resend domain; after authorization add DNS records (§5).
-5. Add OpenAI, Perplexity and Anthropic keys; set provider side monthly usage limits (§7).
-6. Smoke test on the live host: scan three real local business sites you own or have permission to test, sign in, run the free sample, buy Check in test mode, cancel in the portal.
-7. Fill entity details in Terms and Privacy; legal review.
-8. After authorization: Stripe live mode, live webhook, `STRIPE_ALLOW_LIVE=true`, redeploy.
-9. After authorization: point the domain, update `BASE_URL` and the webhook URL.
-10. Start the GTM day 0 to 30 plan.
+1. Create the Vercel project from the repo and connect Neon (`docs/operations.md` §3). Test on PR #1's preview deployment, then merge to `main`.
+2. Add environment variables in Vercel, including the AI keys. Rotate the keys that were pasted in chat and store only the new ones in Vercel.
+3. Run the self test (`/api/ops/selftest`) and fix anything not `ok`.
+4. Create Stripe test products and prices, webhook and portal (§4). Run the five test purchases and one refund.
+5. Create the Resend domain and add its DNS records (§5); confirm a sign in email arrives.
+6. Smoke test: scan three real local business sites you own or have permission to test, sign in, run the free sample, buy Check in test mode, cancel in the portal.
+7. Point growthsignal.ai at Vercel (§6), update `BASE_URL` and the Stripe webhook URL.
+8. After Adam's explicit go: Stripe live mode, live webhook, `STRIPE_ALLOW_LIVE=true`, redeploy.
+9. Start the GTM day 0 to 30 plan and the founding customer program.
 
 ## Biggest remaining business risk
 

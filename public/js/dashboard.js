@@ -326,7 +326,7 @@
           try { const r = await api('/api/billing/portal', { method: 'POST' }); location.href = r.url; } catch (e) { status.replaceChildren(errorBox(e.message)); }
         } }, 'Manage billing, invoices or cancel') : null),
       toggle, cards, status,
-      el('p', { class: 'muted' }, 'Prices in US dollars. Cancel any time from billing management; paid features continue until the end of the period you paid for. Checkout and billing are handled by Stripe.'));
+      el('p', { class: 'muted' }, 'Prices in US dollars. 30 day money back guarantee on your first payment. Cancel any time from billing management; paid features continue until the end of the period you paid for. Checkout and billing are handled by Stripe.'));
   }
 
   function planBullets(p) {
